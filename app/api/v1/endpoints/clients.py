@@ -20,7 +20,12 @@ class PaginationMeta(BaseModel):
 
 
 class PaginatedCustomersResponse(BaseModel):
+    clients: List[CustomerOut]
     data: List[CustomerOut]
+    total: int
+    page: int
+    per_page: int
+    pages: int
     meta: PaginationMeta
 
 
@@ -60,7 +65,12 @@ async def list_customers(
     last_page = math.ceil(total / per_page) if total > 0 else 1
 
     return {
+        "clients": customers,
         "data": customers,
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "pages": last_page,
         "meta": {
             "current_page": page,
             "last_page": last_page,
@@ -68,6 +78,24 @@ async def list_customers(
             "total": total,
         },
     }
+
+
+@router.get("/search", response_model=PaginatedCustomersResponse)
+async def search_customers(
+    query: Optional[str] = Query(None, alias="query"),
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Búsqueda de clientes compatible con useClientSearch del frontend"""
+    return await list_customers(
+        page=page,
+        per_page=per_page,
+        search=query,
+        db=db,
+        current_user=current_user,
+    )
 
 
 @router.post("", response_model=CustomerOut, status_code=status.HTTP_201_CREATED)
