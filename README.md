@@ -38,3 +38,18 @@ API Multi-tenant para el Sistema de Gestión de Pedidos (OMS) con tableros Kanba
 
 6. **Documentación interactiva Swagger:**
    * Abrir en el navegador: [http://localhost:8000/docs](http://localhost:8000/docs)
+
+## Etapas de empresa
+
+Para listar las etapas, envía `GET /api/v1/companies/{company_id}/stages` con un token Bearer. La respuesta es un array ordenado por `position`, y la empresa debe coincidir con la del usuario autenticado.
+
+Para crear una etapa, envía `POST /api/v1/companies/{company_id}/stages` con un token Bearer y un cuerpo como:
+
+```json
+{
+  "name": "En revisión",
+  "is_final": false
+}
+```
+
+La empresa debe coincidir con la del usuario autenticado. El servidor asigna `company_id` y la siguiente `position`; `is_final` se guarda en el campo interno `is_completed_stage`. La respuesta incluye `id`, `company_id`, `name`, `position` e `is_final`.
