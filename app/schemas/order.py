@@ -1,9 +1,18 @@
 import enum
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
+
+
+def to_naive_utc(value: datetime | None) -> datetime | None:
+    """La BD guarda UTC sin zona horaria (TIMESTAMP WITHOUT TIME ZONE)."""
+    if value is None:
+        return None
+    if value.tzinfo is not None:
+        return value.astimezone(timezone.utc).replace(tzinfo=None)
+    return value
 
 
 class OrderPriority(str, enum.Enum):
@@ -32,7 +41,10 @@ class OrderBase(BaseModel):
 
 
 class OrderCreate(OrderBase):
-    pass
+    @field_validator("deadline", mode="after")
+    @classmethod
+    def normalize_deadline(cls, value: datetime | None) -> datetime | None:
+        return to_naive_utc(value)
 
 
 class OrderUpdate(BaseModel):
@@ -52,6 +64,11 @@ class OrderUpdate(BaseModel):
     deadline: Optional[datetime] = None
     completed_at: Optional[datetime] = None
     position: Optional[int] = None
+
+    @field_validator("deadline", "completed_at", mode="after")
+    @classmethod
+    def normalize_datetimes(cls, value: datetime | None) -> datetime | None:
+        return to_naive_utc(value)
 
 
 class OrderOut(OrderBase):
