@@ -255,3 +255,26 @@ async def update_order(
     await db.commit()
     await db.refresh(order)
     return order
+
+
+@router.delete("/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_order(
+    order_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.company_id is None:
+        raise HTTPException(status_code=403, detail="El usuario no pertenece a una empresa")
+
+    result = await db.execute(
+        select(Order).where(
+            Order.id == order_id,
+            Order.company_id == current_user.company_id,
+        )
+    )
+    order = result.scalars().first()
+    if order is None:
+        raise HTTPException(status_code=404, detail="Pedido no encontrado")
+
+    await db.delete(order)
+    await db.commit()
