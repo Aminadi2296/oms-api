@@ -16,6 +16,9 @@ class UserBase(BaseModel):
     email: EmailStr
     full_name: str
     role: UserRole = UserRole.EMPLOYEE
+    job_title: Optional[str] = None
+    phone: Optional[str] = None
+    avatar_url: Optional[str] = None
     is_active: bool = True
     company_id: Optional[int] = None
 
